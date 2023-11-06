@@ -45,9 +45,21 @@ const int LOCATEQUADRANT_NOT_IMPLEMENTED = 0;
 // The function returns after getting valid values for width, emptyXPos and emptyYPos
 int locateQuadrant(int width, int x, int y)
 {
-
-	// remove this line to start your work
-	return LOCATEQUADRANT_NOT_IMPLEMENTED;
+	if(x < width/2 && y < width/2) {
+		return 1;
+	}
+	else if(x >= width/2 && y < width/2){
+		return 2;
+	}
+	else if(x >= width/2 && y >= width/2){
+		return 3;
+	}
+	else if(x < width/2 && y >= width/2){
+		return 4;
+	}
+	else {
+		return LOCATEQUADRANT_NOT_IMPLEMENTED;
+	}
 }
 
 /**
@@ -86,7 +98,25 @@ void initializePuzzleMap(int width, char puzzleMap[][MAX_WIDTH])
 //
 void normalizePuzzleMap(int width, char puzzleMap[][MAX_WIDTH])
 {
-
+	char firstAlpha = 'A';
+	for(int i=0;i<width;i++){
+		for(int j=0;j<width;j++){
+			if((puzzleMap[i][j]>firstAlpha)){
+				char temp = puzzleMap[i][j];
+				for(int k=0;k<width;k++){
+					for(int p=0;p<width;p++){
+						if(puzzleMap[k][p]==firstAlpha){
+							puzzleMap[k][p]=temp;
+						}
+						else if(puzzleMap[k][p]==temp){
+							puzzleMap[k][p]=firstAlpha;
+						}
+					}
+				}
+			}
+			firstAlpha++;
+		}
+	}
 	return;
 }
 
@@ -95,28 +125,58 @@ void normalizePuzzleMap(int width, char puzzleMap[][MAX_WIDTH])
 // The recursive function to fill up the character array: puzzleMap
 // You need to figure out the parameters of the fillPuzzleRecursive function by yourself
 //
-void fillPuzzleRecursive(__ width, __ puzzleMap[][MAX_WIDTH], __ tx,
-						 __ ty, __ x, __ y, __ &nextChar)
+void fillPuzzleRecursive(int width, char puzzleMap[][MAX_WIDTH], int tx,
+                         int ty, int x, int y, char &nextChar)
 {
-	// tx: top Left X coordinate
-	// ty: top Left Y coordinate
-	// x:  x coordinate of the empty cell
-	// y:  y coordinate of the empty cell
-	if (width == 2)
-	{
-		// The base case...
-	}
+    // tx: top Left X coordinate
+    // ty: top Left Y coordinate
+    // x:  x coordinate of the empty cell
+    // y:  y coordinate of the empty cell
+    if (width == 2)
+    {
+        // The base case
+        // Fill the three non-empty cells with the next character
+        for (int i = 0; i < 2; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                if ((tx + i != x || ty + j != y)&&(puzzleMap[tx+i][ty+j]==' '))
+                {
+                    puzzleMap[tx + i][ty + j] = nextChar;
+                }
+            }
+        }
+        // Increment the next character by one
+        nextChar++;
+    }
+    else
+    {
+        // The general case
+        // Divide the sub-rectangle into four equal quadrants
+        int halfWidth = width / 2;
+        int midX = tx + halfWidth;
+        int midY = ty + halfWidth;
+        // Determine which quadrant contains the empty cell
+        int quad = locateQuadrant(width,x,y);
+		//fill L-shape
+		for(int i=0;i<2;i++){
+			for(int j=0;j<2;j++){
+				if(locateQuadrant(width,midX-i,midY-j)!=quad){
+					puzzleMap[midX-i][midY-j] = nextChar;
+				}
+			}
+		}
+        // Call the function recursively on each quadrant
+        fillPuzzleRecursive(halfWidth, puzzleMap, tx, ty, x, y, ++nextChar); // top left
+        fillPuzzleRecursive(halfWidth, puzzleMap, tx, midY, x, y, ++nextChar); // bottom left
+        fillPuzzleRecursive(halfWidth, puzzleMap, midX, ty, x, y, ++nextChar); // top right
+        fillPuzzleRecursive(halfWidth, puzzleMap, midX, midY, x, y, ++nextChar); // bottom right
+    }
 
-	// The general case
-	//
-	// Key idea:
-	//  Because qual must be equal to either 1, 2, 3 or 4
-	// As a result:
-	//    A L-shape MUST be created at the center of the bigger rectangle
-	//    Each Quad MUST have exactly 1 empty space
 
-	return;
+    return;
 }
+
 
 // TODO:
 // function checkInput:
@@ -135,14 +195,21 @@ void fillPuzzleRecursive(__ width, __ puzzleMap[][MAX_WIDTH], __ tx,
 // The function returns after getting valid values for width, emptyXPos and emptyYPos
 void checkInput(int &width, int &emptyXPos, int &emptyYPos)
 {
-	// Some helper lines for you to use:
-	cout << "Enter the width/height of the puzzle (2, 4, 8): ";
-	cout << endl;
-	cout << "Enter the x-coordinate of the empty cell (0-" << width - 1 << "): ";
-	cout << endl;
-	cout << "Enter the y-coordinate of the empty cell (0-" << width - 1 << "): ";
-	cout << endl;
-
+	do {
+		cout << "Enter the width/height of the puzzle (2, 4, 8): ";
+		cin >> width;
+		cout << endl;
+	} while(width != 2 && width != 4 && width != 8);
+	do {
+		cout << "Enter the x-coordinate of the empty cell (0-" << width - 1 << "): ";
+		cin >> emptyXPos;
+		cout << endl;
+	} while(emptyXPos < 0 || emptyXPos > width - 1);
+	do {
+		cout << "Enter the y-coordinate of the empty cell (0-" << width - 1 << "): ";
+		cin >> emptyYPos;
+		cout << endl;
+	} while(emptyXPos < 0 || emptyXPos > width - 1);
 	return;
 }
 
