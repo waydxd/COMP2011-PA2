@@ -93,28 +93,50 @@ void initializePuzzleMap(int width, char puzzleMap[][MAX_WIDTH])
 			puzzleMap[x][y] = ' ';
 }
 
+// A function that takes a square 2D array of characters and its dimension as parameters
+// and increment each character by one in ASCII value
+void increment_chars(char arr[][8], int dim) {
+  // Loop through each row and column of the array
+  for (int i = 0; i < dim; i++) {
+    for (int j = 0; j < dim; j++) {
+      // Increment the character at the current position by one
+	  if(arr[i][j]!=' '){
+      	arr[i][j]+=24;
+	  }
+    }
+  }
+}
+// A function that takes a square 2D array of characters and its dimension as parameters
+// and replace all occurrences of the target character with the replacement character in the array
+void replace_char(char arr[][8], int dim, char target, char replacement) {
+  // Loop through each row and column of the array
+  for (int i = 0; i < dim; i++) {
+    for (int j = 0; j < dim; j++) {
+      // Check if the character at the current position is equal to the target character
+      if (arr[i][j] == target) {
+        // Replace the character with the replacement character
+        arr[i][j] = replacement;
+      }
+    }
+  }
+}
+
+
+
 // TODO:
 // Normalize the whole puzzleMap. The space character ' ' will not be changed.
 //
+
 void normalizePuzzleMap(int width, char puzzleMap[][MAX_WIDTH])
 {
+	increment_chars(puzzleMap,width);
 	char firstAlpha = 'A';
 	for(int i=0;i<width;i++){
 		for(int j=0;j<width;j++){
-			if((puzzleMap[i][j]>firstAlpha)){
-				char temp = puzzleMap[i][j];
-				for(int k=0;k<width;k++){
-					for(int p=0;p<width;p++){
-						if(puzzleMap[k][p]==firstAlpha){
-							puzzleMap[k][p]=temp;
-						}
-						else if(puzzleMap[k][p]==temp){
-							puzzleMap[k][p]=firstAlpha;
-						}
-					}
-				}
+			if(puzzleMap[j][i]>firstAlpha){
+				char temp = puzzleMap[j][i];
+				replace_char(puzzleMap,width,temp,firstAlpha++);
 			}
-			firstAlpha++;
 		}
 	}
 	return;
@@ -126,7 +148,7 @@ void normalizePuzzleMap(int width, char puzzleMap[][MAX_WIDTH])
 // You need to figure out the parameters of the fillPuzzleRecursive function by yourself
 //
 void fillPuzzleRecursive(int width, char puzzleMap[][MAX_WIDTH], int tx,
-                         int ty, int x, int y, char &nextChar)
+                         int ty, int x, int y, char &nextChar, int quadrant = 0)
 {
     // tx: top Left X coordinate
     // ty: top Left Y coordinate
@@ -146,8 +168,6 @@ void fillPuzzleRecursive(int width, char puzzleMap[][MAX_WIDTH], int tx,
                 }
             }
         }
-        // Increment the next character by one
-        nextChar++;
     }
     else
     {
@@ -157,20 +177,29 @@ void fillPuzzleRecursive(int width, char puzzleMap[][MAX_WIDTH], int tx,
         int midX = tx + halfWidth;
         int midY = ty + halfWidth;
         // Determine which quadrant contains the empty cell
-        int quad = locateQuadrant(width,x,y);
+        int quad = locateQuadrant(width,x-tx,y-ty);
+		bool outRange = (x<tx) || (y<ty) || (x>tx+width) || (y>ty+width);
 		//fill L-shape
 		for(int i=0;i<2;i++){
 			for(int j=0;j<2;j++){
-				if(locateQuadrant(width,midX-i,midY-j)!=quad){
-					puzzleMap[midX-i][midY-j] = nextChar;
+				if(!outRange){
+					if(locateQuadrant(width,midX-i-tx,midY-j-ty)!=quad){
+						puzzleMap[midX-i][midY-j] = nextChar;
+					}
 				}
+				else{
+					if(locateQuadrant(width,midX-i-tx,midY-j-ty)!=quadrant){
+						puzzleMap[midX-i][midY-j] = nextChar;
+					}
+				}
+				} 
 			}
-		}
+
         // Call the function recursively on each quadrant
-        fillPuzzleRecursive(halfWidth, puzzleMap, tx, ty, x, y, ++nextChar); // top left
-        fillPuzzleRecursive(halfWidth, puzzleMap, tx, midY, x, y, ++nextChar); // bottom left
-        fillPuzzleRecursive(halfWidth, puzzleMap, midX, ty, x, y, ++nextChar); // top right
-        fillPuzzleRecursive(halfWidth, puzzleMap, midX, midY, x, y, ++nextChar); // bottom right
+        fillPuzzleRecursive(halfWidth, puzzleMap, tx, ty, x, y, ++nextChar,3); // top left
+        fillPuzzleRecursive(halfWidth, puzzleMap, tx, midY, x, y, ++nextChar,2); // bottom left
+        fillPuzzleRecursive(halfWidth, puzzleMap, midX, ty, x, y, ++nextChar,4); // top right
+        fillPuzzleRecursive(halfWidth, puzzleMap, midX, midY, x, y, ++nextChar,1); // bottom right
     }
 
 
